@@ -8,8 +8,9 @@
  *      rgb_matrix_indicators_advanced_user(). If your keymap already
  *      defines either, merge the bodies instead.
  *
- * Command IDs 0x51-0x53 sit outside VIA's range; anything else is
- * passed through untouched so VIA keeps working.
+ * Private command IDs 0x51-0x53 are unused by this QMK revision's VIA
+ * commands. Check for collisions when upgrading QMK; other commands
+ * pass through untouched. See readme.md for the wire format.
  *
  * TYPE-9 Series III LED map (WS2812 serpentine chain, keyboard.json):
  *
@@ -29,8 +30,8 @@
 #define AG_CMD_CLEAR_ALL 0x52
 #define AG_CMD_HEARTBEAT 0x53
 
-#define AG_MAX_LEDS      8
-#define AG_TIMEOUT_MS    10000  /* no heartbeat -> all off */
+#define AG_MAX_LEDS      RGB_MATRIX_LED_COUNT
+#define AG_TIMEOUT_MS    10000  /* no heartbeat -> release overrides */
 
 enum { AG_MODE_OFF = 0, AG_MODE_SOLID, AG_MODE_BREATHE, AG_MODE_BLINK };
 
@@ -63,8 +64,11 @@ static void ag_set(uint8_t led, uint8_t r, uint8_t g, uint8_t b, uint8_t mode) {
 /* VIA calls this for every raw HID report before erroring on unknown
  * command IDs — we intercept ours and leave the rest to VIA. */
 bool via_command_kb(uint8_t *data, uint8_t length) {
+    if (!length) return true; /* empty report: nothing for VIA to parse */
     switch (data[0]) {
         case AG_CMD_SET_LED:
+            /* Consume malformed private commands without changing state. */
+            if (length < 6 || data[1] >= AG_MAX_LEDS || data[5] > AG_MODE_BLINK) return true;
             ag_set(data[1], data[2], data[3], data[4], data[5]);
             ag_last_heartbeat = timer_read32();
             return true;
@@ -79,7 +83,7 @@ bool via_command_kb(uint8_t *data, uint8_t length) {
     return false; /* not ours -> VIA handles it */
 }
 
-/* Triangle wave 0..255 for breathing, period ~2 s */
+/* Triangle wave 0..255 for breathing, period 4.096 s */
 static uint8_t ag_breathe_val(void) {
     uint16_t t = (timer_read32() / 8) % 512;
     return (uint8_t)(t < 256 ? t : 511 - t);
