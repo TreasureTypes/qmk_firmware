@@ -1,3 +1,3 @@
 VIA_ENABLE = yes
-SRC += agent_leds.c
+SRC += agent.c device.c
 LTO_ENABLE = yes
