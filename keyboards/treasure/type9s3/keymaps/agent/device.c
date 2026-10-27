@@ -11,10 +11,11 @@ bool agent_command(uint8_t *data, uint8_t length);
 #define CMD_GET_INFO 0x54
 #define CMD_ENTER_BOOTLOADER 0x55
 
-#define DEVICE_PROTOCOL_VERSION 1
+#define DEVICE_PROTOCOL_VERSION 2
+#define DEVICE_MODEL_ID         0x1C /* MPD003CE */
 #define FIRMWARE_VERSION_MAJOR  1
 #define FIRMWARE_VERSION_MINOR  0
-#define FIRMWARE_VERSION_PATCH  0
+#define FIRMWARE_VERSION_PATCH  2
 
 bool via_command_kb(uint8_t *data, uint8_t length) {
     if (!length) return true; /* nothing for VIA to parse */
@@ -31,6 +32,8 @@ bool via_command_kb(uint8_t *data, uint8_t length) {
             data[8] = FIRMWARE_VERSION_PATCH;
             data[9] = RGB_MATRIX_LED_COUNT;
             data[10] = 0x0F; /* Supported modes 0..3, one bit per mode. */
+            /* Single-byte model identifier; remaining reserved bytes stay zero. */
+            data[11] = DEVICE_MODEL_ID;
             raw_hid_send(data, length);
             return true;
         case CMD_ENTER_BOOTLOADER:

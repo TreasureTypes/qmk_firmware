@@ -63,11 +63,26 @@ The firmware replies using the received buffer, without persistent RAM state:
 | --- | --- | --- |
 | 0 | Command | `0x54` |
 | 1–4 | Model signature, ASCII | `T9S3` |
-| 5 | Protocol version | `1` |
-| 6–8 | Firmware major, minor, patch | `1, 0, 0` |
+| 5 | Protocol version | `2` |
+| 6–8 | Firmware major, minor, patch | `1, 0, 2` |
 | 9 | LED count | `9` |
 | 10 | Supported modes, bit N represents mode N | `0x0F` |
-| 11–31 | Reserved | `0` |
+| 11 | Model identifier | `0x1C` (MPD003CE) |
+| 12–31 | Reserved | `0` |
+
+The host application can identify **MPD003CE** by checking that response
+byte 0 is `0x54`, bytes 1–4 are ASCII `T9S3`, byte 5 is `2`, and byte 11
+is `0x1C`. This is a single binary byte, not an ASCII string. Bytes 12–31
+are reserved and returned as zero.
+
+Protocol version 1 used either zeros or the ASCII `CE` marker in bytes
+11–12. Hosts must handle that older format separately; a missing or invalid
+reply must not be classified as MPD003CE. The identifier denotes a model,
+not an individual physical keyboard, and is not authentication.
+
+USB VID `0x5452`, PID `0x5493`, the USB product name, and the VIA protocol
+remain unchanged. The private device protocol is now version 2 because
+its identification format changed. Firmware version is now 1.0.2.
 
 Increment the firmware version constants in `device.c` for each release.
 Increment the protocol version for incompatible wire-format changes. The

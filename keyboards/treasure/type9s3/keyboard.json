@@ -47,7 +47,10 @@
             "solid_splash": true
         },
         "default": {
-            "speed": 40,
+            "animation": "solid_color",
+            "hue": 0,
+            "sat": 255,
+            "speed": 5,
             "val": 120
         },
         "driver": "ws2812",
